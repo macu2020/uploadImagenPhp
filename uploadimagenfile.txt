@@ -1,0 +1,74 @@
+<?php 
+	require_once "../../../conexion.php";
+
+
+ 
+$cone= Conexion::conectaweb();
+
+	$respuesta = ['result'=>array()];
+
+if (isset($_POST['nompro']) && isset($_POST['idcate']) && isset($_FILES['imgfilepro']) && isset($_POST['stokpro']) && isset($_POST['descpro']) && isset($_POST['precpro']) && isset($_POST['namecat']) ) {
+
+	$nompro = $_POST['nompro'];
+	$catpro = $_POST['idcate'];
+	$filpro = $_FILES['imgfilepro'];
+	$stopro = $_POST['stokpro'];
+	$despro = $_POST['descpro'];
+	$prepro = $_POST['precpro'];
+	$namecat = $_POST['namecat'];
+
+	$patron_texto = "/^[0-9a-zA-ZáéíóúÁÉÍÓÚäëïöüÄËÏÖÜàèìòùÀÈÌÒÙ\s]+$/";
+
+
+if (empty($nompro)) {
+	$respuesta['result']=array("mensaje"=>"No ingreso el nombre del producto");
+	}else if (!preg_match($patron_texto, $nompro)) {
+			$respuesta['result']=array("mensaje"=>"datos no corectos de Producto");	
+	}else if ($catpro == 0) {
+			$respuesta['result']=array("mensaje"=>"No ingreso categoria del producto");
+	}else if (empty($prepro) || $prepro === 0) {
+			$respuesta['result']=array("mensaje"=>"No ingreso Precio del producto");
+	}else if (is_numeric($prepro) AND ($prepro <0)) {
+			$respuesta['result']=array("mensaje"=>"El precio del producto No debe ser negativo");
+	}else if (empty($stopro) || $stopro <= 0) {
+		$respuesta['result']=array("mensaje"=>"No ingreso Stock del producto");
+	}else if (empty($despro)) {
+		$respuesta['result']=array("mensaje"=>"No ingreso Descripcion del producto");
+	}else if ($filpro["type"] ==  "image/jpg" || $filpro["type"] ==  "image/jpeg"  ) {
+
+$directorio="../../../../Assets/img/productos/$namecat";
+
+if (!file_exists($directorio)) {
+    mkdir($directorio, 0777, true);
+}
+
+	$ruta = $directorio.'/'.md5($filpro['tmp_name']).".jpg";
+
+	$sql="INSERT INTO `productos` ( `nomprod`, `cat_id`,`photo`,`prepro`, `contpro`,`stokpro`) VALUES( '$nompro', '$catpro','$ruta','$prepro','$despro','$stopro')";
+	
+		$result = $cone->prepare($sql);
+		if ($result->execute()) {	
+		//1.- abrir la foto original
+		$original = imagecreatefromjpeg($filpro['tmp_name']);
+		$ancho_original = imagesx($original);
+		$alto_original = imagesy($original);
+		
+		//2.-crear un lienzo vacio(foto destino 750*400)
+		$copia = imagecreatetruecolor(250, 250);
+
+		imagecopyresampled($copia, $original, 0, 0, 0, 0, 250, 250, $ancho_original, $alto_original);
+		//para moverlo 
+		imagejpeg($copia,$ruta,100);				
+	$respuesta['result']=array("mensaje"=>"exito");
+		}else{
+	$respuesta['result']=array("mensaje"=>"Error al guardar");
+		}
+}else{
+ 	$respuesta['result']=array("mensaje"=>"debe seleccionar una Imagen  valida");
+}
+}else{
+	$respuesta['result']=array("mensaje"=>"No se esta reciviendo ningun dato");
+}
+	echo $respuesta['result']['mensaje'];
+
+ ?>

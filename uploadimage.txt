@@ -1,0 +1,72 @@
+<?php 
+	require_once "../../conexion.php";
+	$cone= Conexion::conectaweb();
+
+	$respuesta = ['result'=>array("mensaje"=>"ingreso no Permitido")];
+
+	$namefile = $_POST['name'];
+	$imagen = $_FILES['imgfile'];
+ 
+
+if (!isset($namefile)  || empty($namefile)) {
+	$respuesta['result']=array("mensaje"=>"No existe el nombre del Slide");	
+	die();
+}
+
+/*
+if ($imagen["type"] ==  "image/jpg" || $imagen["type"] ==  "image/jpeg" || $imagen["type"] ==  "image/png" ) {
+	$ruta = "../../../Assets/img/slide/".md5($imagen['tmp_name']).".jpg";
+	$sql="INSERT INTO `slider` ( `name`, `photo`) VALUES( '$namefile', '$ruta')";
+	
+		$result = $cone->prepare($sql);
+		if ($result->execute()) {	
+		move_uploaded_file($imagen["tmp_name"], $ruta);
+			echo "se suvbio correctamente el archivo";
+		}else{
+			echo "no se gurado correctamente";
+		}
+}else{
+	echo "debe seleccionar una imagen valida";
+}*/
+
+
+
+
+
+
+
+
+if ($imagen["type"] ==  "image/jpg" || $imagen["type"] ==  "image/jpeg"  ) {
+	$ruta = "../../../Assets/img/slide/imgslides/".md5($imagen['tmp_name']).".jpg";
+	$sql="INSERT INTO `slider` ( `name`, `photo`) VALUES( '$namefile', '$ruta')";
+	
+		$result = $cone->prepare($sql);
+		if ($result->execute()) {	
+		//1.- abrir la foto original
+		$original = imagecreatefromjpeg($imagen['tmp_name']);
+		$ancho_original = imagesx($original);
+		$alto_original = imagesy($original);
+		
+		//2.-crear un lienzo vacio(foto destino 750*400)
+		$copia = imagecreatetruecolor(650, 420);
+
+			//copiar original->copia
+			//1-2 destino-original
+			//3-4 eje X_Y pegado --> 0,0
+			//5-6 eje X_Y original -->0,0
+			//7-8 ancho-alto destino -->width -height
+			//9-10 ancho-alto original -->width -height
+		imagecopyresampled($copia, $original, 0, 0, 0, 0, 650, 420, $ancho_original, $alto_original);
+		//para moverlo 
+		imagejpeg($copia,$ruta,100);				
+			$respuesta['result']=array("mensaje"=>"exito");					
+		}else{
+			$respuesta['result']=array("mensaje"=>"Error al guardar");	
+		}
+}else{
+			$respuesta['result']=array("mensaje"=>"debe seleccionar una imagen valida");	
+}
+
+	echo $respuesta['result']['mensaje'];
+
+ ?>
